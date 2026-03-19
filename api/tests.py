@@ -68,8 +68,10 @@ class NotesApiTests(TestCase):
         self.authenticate(self.user)
         list_response = self.client.get("/api/notes/")
         self.assertEqual(list_response.status_code, 200)
-        self.assertEqual(len(list_response.json()), 1)
-        self.assertEqual(list_response.json()[0]["title"], "First")
+        payload = list_response.json()
+        self.assertEqual(payload["count"], 1)
+        self.assertEqual(len(payload["results"]), 1)
+        self.assertEqual(payload["results"][0]["title"], "First")
 
     def test_cannot_access_other_users_note(self):
         self.authenticate(self.other_user)

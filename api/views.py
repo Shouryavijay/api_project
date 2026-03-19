@@ -2,6 +2,7 @@ from django.core.cache import cache
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status, generics
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from .models import Note, Product, Order
@@ -53,9 +54,12 @@ def note_list_create(request):
         if cached is not None:
             return Response(cached)
         notes = Note.objects.filter(user=request.user).order_by('-created_at')
-        serializer = NoteSerializer(notes, many=True)
-        cache.set(cache_key, serializer.data, timeout=30)
-        return Response(serializer.data)
+        paginator = PageNumberPagination()
+        page = paginator.paginate_queryset(notes, request)
+        serializer = NoteSerializer(page, many=True)
+        data = paginator.get_paginated_response(serializer.data).data
+        cache.set(cache_key, data, timeout=30)
+        return Response(data)
 
     if request.method == 'POST':
         serializer = NoteSerializer(data=request.data)
